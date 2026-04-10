@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Wedding Invitation</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="container">
+    <h1>Wedding Invitation</h1>
+    <p class="subtitle">Personalize & Send with Ease</p>
+
+    <!-- Step 1: Guest Details -->
+    <div id="step1" class="form-step active">
+        <div class="input-group">
+            <label for="guest_name">Guest Name <small>(श्रीमान)</small></label>
+            <input type="text" id="guest_name" placeholder="E.g. Ramesh Sharma" required>
+        </div>
+
+        <div class="input-group">
+            <label for="family_members">Family Members <small>(Optional)</small></label>
+            <textarea id="family_members" placeholder="With Family / एवं परिवार"></textarea>
+        </div>
+
+        <button type="button" onclick="goToStep2()">Complete Name</button>
+    </div>
+
+    <!-- Step 2: Phone & Send -->
+    <div id="step2" class="form-step">
+        <div class="input-group">
+            <label for="phone">Phone Number <small>(WhatsApp)</small></label>
+            <input type="tel" id="phone" placeholder="E.g. 9876543210" required>
+        </div>
+
+        <button type="button" id="sendBtn" onclick="sendInvitation()">Send Invitation</button>
+        <button type="button" class="back-btn" onclick="goToStep1()">Back to Edit</button>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading" class="form-step">
+        <div class="loader"></div>
+        <p style="margin-top:20px; font-weight:bold; color:var(--text-main);">Generating Details...</p>
+    </div>
+
+    <!-- Step 3: Success -->
+    <div id="step3" class="form-step">
+        <div class="success-icon">✓</div>
+        <p id="success-msg">Invitation Ready!</p>
+        <p style="margin: 15px 0; font-size:14px; color:var(--text-light);" id="success-subtext">
+            If WhatsApp didn't open automatically, click below to open it. Don't forget to attach the downloaded PDF!
+        </p>
+        <button type="button" id="manualWaBtn" style="background:#25D366;">Open WhatsApp</button>
+        <button type="button" class="back-btn" onclick="resetForm()">Create Another</button>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
