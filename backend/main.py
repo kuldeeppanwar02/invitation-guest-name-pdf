@@ -40,9 +40,9 @@ pdfmetrics.registerFont(TTFont("NotoSansDevanagari", FONT_PATH))
 # CONFIGURATION FOR TEXT PLACEMENT
 # Adjust these values to fit your PDF perfectly!
 # ==========================================
-START_X = 180      # The Left-to-Right position where the name starts right after 'श्रीमान्'
-START_Y = 440      # The Bottom-to-Top position of the first line
-LINE_SPACING = 34  # Space between multiple family member lines
+START_X = 170      # The Left-to-Right position where the name starts right after 'श्रीमान्'
+START_Y = 370      # The Bottom-to-Top position of the first line
+LINE_SPACING = 25  # Space between multiple family member lines
 TEXT_COLOR = "#5c2a1a" # Dark maroon/brown color matching traditional wedding text
 FONT_SIZE_MAIN = 22
 FONT_SIZE_FAMILY = 16
