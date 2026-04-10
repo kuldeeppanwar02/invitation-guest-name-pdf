@@ -3,3 +3,4 @@ uvicorn
 PyPDF2
 reportlab
 python-multipart
+pillow

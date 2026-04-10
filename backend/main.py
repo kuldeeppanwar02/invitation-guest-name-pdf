@@ -11,7 +11,9 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.colors import HexColor
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib.utils import ImageReader
 from PyPDF2 import PdfReader, PdfWriter
+from PIL import Image, ImageDraw, ImageFont
 
 app = FastAPI()
 
@@ -24,41 +26,60 @@ app.add_middleware(
 )
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-TEMPLATE_PATH = os.path.join(BASE_DIR, "template.pdf")
+TEMPLATE_PATH = os.path.join(BASE_DIR, "shadi card.pdf")
 FONT_PATH = os.path.join(os.path.dirname(__file__), "NotoSansDevanagari-Regular.ttf")
 
-# ==========================================
-# AUTO-DOWNLOAD MISSING ASSETS FOR CLOUD
-# ==========================================
 if not os.path.exists(FONT_PATH):
     print("Downloading Noto Sans Devanagari font...")
     font_url = "https://github.com/googlefonts/noto-fonts/raw/main/hinted/ttf/NotoSansDevanagari/NotoSansDevanagari-Regular.ttf"
     urllib.request.urlretrieve(font_url, FONT_PATH)
 
-if not os.path.exists(TEMPLATE_PATH):
-    print("Generating dummy template.pdf...")
-    c = canvas.Canvas(TEMPLATE_PATH, pagesize=letter)
-    c.setFillColor(HexColor("#FFFDD0"))
-    c.rect(0, 0, letter[0], letter[1], stroke=0, fill=1)
-    c.setFillColor(HexColor("#D4AF37"))
-    c.setFont("Helvetica-Bold", 40)
-    c.drawCentredString(letter[0]/2, 600, "Wedding Invitation")
-    c.setFont("Helvetica", 20)
-    c.drawCentredString(letter[0]/2, 500, "You are cordially invited to our wedding.")
-    c.setFont("Helvetica", 18)
-    c.drawCentredString(letter[0]/2, 350, "श्रीमान _____________________")
-    c.showPage()
-    # Create 2 more dummy pages
-    for page_num in range(2, 4):
-        c.setFillColor(HexColor("#FFFDD0"))
-        c.rect(0, 0, letter[0], letter[1], stroke=0, fill=1)
-        c.setFillColor(HexColor("#D4AF37"))
-        c.setFont("Helvetica", 30)
-        c.drawCentredString(letter[0]/2, 400, f"Page {page_num}: Content Details")
-        c.showPage()
-    c.save()
-
 pdfmetrics.registerFont(TTFont("NotoSansDevanagari", FONT_PATH))
+
+# ==========================================
+# CONFIGURATION FOR TEXT PLACEMENT
+# Adjust these values to fit your PDF perfectly!
+# ==========================================
+START_X = 200      # The Left-to-Right position where the name starts right after 'श्रीमान्'
+START_Y = 400      # The Bottom-to-Top position of the first line
+LINE_SPACING = 30  # Space between multiple family member lines
+TEXT_COLOR = "#5c2a1a" # Dark maroon/brown color matching traditional wedding text
+FONT_SIZE_MAIN = 22
+FONT_SIZE_FAMILY = 16
+
+def draw_text_as_image(canvas, text, x_pos, y_pos, font_path, font_size, color_hex):
+    # Dynamically size the image based on the text
+    try:
+        font = ImageFont.truetype(font_path, font_size)
+    except:
+        font = ImageFont.load_default()
+        
+    temp_img = Image.new('RGBA', (1, 1), (255, 255, 255, 0))
+    temp_d = ImageDraw.Draw(temp_img)
+    left, top, right, bottom = temp_d.textbbox((0, 0), text, font=font)
+    text_w = right - left
+    text_h = bottom - top + 10 # add padding
+    
+    # Create the actual image container
+    img = Image.new('RGBA', (text_w, text_h), (255, 255, 255, 0))
+    d = ImageDraw.Draw(img)
+    
+    # Parse color
+    color_hex = color_hex.lstrip('#')
+    if len(color_hex) == 6:
+        r, g, b = tuple(int(color_hex[i:i+2], 16) for i in (0, 2, 4))
+    else:
+        r, g, b = (92, 42, 26) # fallback maroon
+        
+    d.text((0, 0), text, font=font, fill=(r, g, b, 255))
+    
+    img_buffer = io.BytesIO()
+    img.save(img_buffer, format="PNG")
+    img_buffer.seek(0)
+    img_reader = ImageReader(img_buffer)
+    
+    # drawImage at the exact X, Y
+    canvas.drawImage(img_reader, x_pos, y_pos, text_w, text_h, mask='auto')
 
 @app.post("/api/generate")
 async def generate_pdf(
@@ -66,29 +87,21 @@ async def generate_pdf(
     family_members: Optional[str] = Form("")):
     
     try:
-        # 1. Create overlay PDF in memory
         overlay_buffer = io.BytesIO()
         c = canvas.Canvas(overlay_buffer, pagesize=letter)
         
-        c.setFillColor(HexColor("#FFFDD0"))
-        rect_width = 400
-        rect_height = 40
-        c.rect((letter[0] - rect_width)/2, 335, rect_width, rect_height, stroke=0, fill=1)
-        
-        c.setFillColor(HexColor("#D4AF37"))
-        c.setFont("NotoSansDevanagari", 22)
-        
-        main_text = f"श्रीमान {guest_name}"
-        c.drawCentredString(letter[0]/2, 350, main_text)
+        # Write guest name right after श्रीमान्
+        draw_text_as_image(c, guest_name, START_X, START_Y, FONT_PATH, FONT_SIZE_MAIN, TEXT_COLOR)
         
         if family_members:
-            c.setFont("NotoSansDevanagari", 14)
             lines = family_members.split('\n')
-            y_offset = 320
+            current_y = START_Y - LINE_SPACING
             for line in lines:
                 if line.strip():
-                    c.drawCentredString(letter[0]/2, y_offset, line.strip())
-                    y_offset -= 20
+                    # For family members, we can still use START_X to align them on the left, 
+                    # or slightly indent them. Lets use START_X
+                    draw_text_as_image(c, line.strip(), START_X, current_y, FONT_PATH, FONT_SIZE_FAMILY, TEXT_COLOR)
+                    current_y -= LINE_SPACING
                 
         c.save()
         overlay_buffer.seek(0)
