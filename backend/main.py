@@ -3,7 +3,7 @@ import io
 import urllib.request
 from typing import Optional
 from fastapi import FastAPI, Form
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from reportlab.pdfgen import canvas
@@ -108,18 +108,22 @@ async def generate_pdf(
             
         output_buffer = io.BytesIO()
         writer.write(output_buffer)
-        output_buffer.seek(0)
+        pdf_bytes = output_buffer.getvalue()
             
-        return StreamingResponse(
-            output_buffer, 
+        safe_filename = urllib.parse.quote(f"{guest_name}_Invitation.pdf")
+        return Response(
+            content=pdf_bytes, 
             media_type="application/pdf",
             headers={
-                "Content-Disposition": f"attachment; filename={guest_name}_Invitation.pdf"
+                "Content-Disposition": f"attachment; filename*=utf-8''{safe_filename}"
             }
         )
         
     except Exception as e:
-        return {"error": str(e)}
+        import traceback
+        traceback.print_exc()
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Serve frontend at root AFTER all api routes
 app.mount("/", StaticFiles(directory=os.path.join(BASE_DIR, "frontend"), html=True), name="frontend")
