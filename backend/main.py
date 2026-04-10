@@ -7,7 +7,7 @@ from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
+from reportlab.lib.pagesizes import A4
 from reportlab.lib.colors import HexColor
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -26,7 +26,7 @@ app.add_middleware(
 )
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-TEMPLATE_PATH = os.path.join(BASE_DIR, "shadi card.pdf")
+TEMPLATE_PATH = os.path.join(BASE_DIR, "template.pdf")
 FONT_PATH = os.path.join(os.path.dirname(__file__), "NotoSansDevanagari-Regular.ttf")
 
 if not os.path.exists(FONT_PATH):
@@ -40,8 +40,8 @@ pdfmetrics.registerFont(TTFont("NotoSansDevanagari", FONT_PATH))
 # CONFIGURATION FOR TEXT PLACEMENT
 # Adjust these values to fit your PDF perfectly!
 # ==========================================
-START_X = 200      # The Left-to-Right position where the name starts right after 'श्रीमान्'
-START_Y = 400      # The Bottom-to-Top position of the first line
+START_X = 180      # The Left-to-Right position where the name starts right after 'श्रीमान्'
+START_Y = 550      # The Bottom-to-Top position of the first line (higher up for A4)
 LINE_SPACING = 30  # Space between multiple family member lines
 TEXT_COLOR = "#5c2a1a" # Dark maroon/brown color matching traditional wedding text
 FONT_SIZE_MAIN = 22
@@ -88,7 +88,7 @@ async def generate_pdf(
     
     try:
         overlay_buffer = io.BytesIO()
-        c = canvas.Canvas(overlay_buffer, pagesize=letter)
+        c = canvas.Canvas(overlay_buffer, pagesize=A4)
         
         # Write guest name right after श्रीमान्
         draw_text_as_image(c, guest_name, START_X, START_Y, FONT_PATH, FONT_SIZE_MAIN, TEXT_COLOR)
