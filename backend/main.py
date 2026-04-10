@@ -1,6 +1,6 @@
 import os
 import io
-import uuid
+import urllib.request
 from typing import Optional
 from fastapi import FastAPI, Form
 from fastapi.responses import StreamingResponse
@@ -26,6 +26,37 @@ app.add_middleware(
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 TEMPLATE_PATH = os.path.join(BASE_DIR, "template.pdf")
 FONT_PATH = os.path.join(os.path.dirname(__file__), "NotoSansDevanagari-Regular.ttf")
+
+# ==========================================
+# AUTO-DOWNLOAD MISSING ASSETS FOR CLOUD
+# ==========================================
+if not os.path.exists(FONT_PATH):
+    print("Downloading Noto Sans Devanagari font...")
+    font_url = "https://github.com/googlefonts/noto-fonts/raw/main/hinted/ttf/NotoSansDevanagari/NotoSansDevanagari-Regular.ttf"
+    urllib.request.urlretrieve(font_url, FONT_PATH)
+
+if not os.path.exists(TEMPLATE_PATH):
+    print("Generating dummy template.pdf...")
+    c = canvas.Canvas(TEMPLATE_PATH, pagesize=letter)
+    c.setFillColor(HexColor("#FFFDD0"))
+    c.rect(0, 0, letter[0], letter[1], stroke=0, fill=1)
+    c.setFillColor(HexColor("#D4AF37"))
+    c.setFont("Helvetica-Bold", 40)
+    c.drawCentredString(letter[0]/2, 600, "Wedding Invitation")
+    c.setFont("Helvetica", 20)
+    c.drawCentredString(letter[0]/2, 500, "You are cordially invited to our wedding.")
+    c.setFont("Helvetica", 18)
+    c.drawCentredString(letter[0]/2, 350, "श्रीमान _____________________")
+    c.showPage()
+    # Create 2 more dummy pages
+    for page_num in range(2, 4):
+        c.setFillColor(HexColor("#FFFDD0"))
+        c.rect(0, 0, letter[0], letter[1], stroke=0, fill=1)
+        c.setFillColor(HexColor("#D4AF37"))
+        c.setFont("Helvetica", 30)
+        c.drawCentredString(letter[0]/2, 400, f"Page {page_num}: Content Details")
+        c.showPage()
+    c.save()
 
 pdfmetrics.registerFont(TTFont("NotoSansDevanagari", FONT_PATH))
 
